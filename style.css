@@ -5,8 +5,7 @@ body {
   }
   
   h1 {
-    font-style: italic;
-    color: #FF6F00;
+    font-size: x-large;
   }
   
   video {
@@ -52,6 +51,6 @@ body {
     position: absolute;
   }
   
-  #outputCanvas {
+  #webcamPredictCanvas {
     position: absolute;
   }

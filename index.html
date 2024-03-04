@@ -9,36 +9,48 @@
 </head>
 
 <body>
-    <h1>Multiple object detection using pre trained model in TensorFlow.js</h1>
+    <h1>APD Object Detection</h1>
 
     <p>Wait for the model to load before clicking the button to enable the webcam - at which point it will become
         visible to use.</p>
 
-    <section id="demos" class="invisible">
+    <section id="predictSection" class="invisible">
 
-        <p>Hold some objects up close to your webcam to get a real-time classification! When ready click "enable webcam"
-            below and accept access to the webcam when the browser asks (check the top left of your window)</p>
+        <div>
+            <input type="file" id="imageFile" accept="image/*">
+            <button id="predictButton">Predict</button>
+            <div id="imagePreview"></div>
+            <canvas id="imagePredictCanvas"></canvas>
+        </div>
 
         <div id="liveView" class="camView">
             <button id="webcamButton">Enable Webcam</button>
-            <canvas id="outputCanvas" width="512" height="512"></canvas>
-            <video id="webcam" autoplay muted width="512" height="512"></video>
+            <div>
+                <canvas id="webcamPredictCanvas" width="512" height="512"></canvas>
+                <video id="webcam" autoplay muted width="512" height="512"></video>
+            </div>
+
         </div>
     </section>
 
-    <!-- Import TensorFlow.js library -->
-
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js" type="text/javascript"></script>
-    <!-- Load the coco-ssd model to use to recognize things in images -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script> -->
+
     <script>
         let model = undefined;
+
+        const video = document.getElementById('webcam');
+        const liveView = document.getElementById('liveView');
+        const predictSection = document.getElementById('predictSection');
+        const enableWebcamButton = document.getElementById('webcamButton');
+        enableWebcamButton.hidden = true;
+
+
+
 
         async function loadModel() {
             try {
                 model = await tf.loadGraphModel('model_tfjs/model.json');
-                demosSection.classList.remove('invisible');
+                predictSection.classList.remove('invisible');
                 enableWebcamButton.hidden = false;
             } catch (error) {
                 console.error('Failed to load model:', error);
@@ -46,18 +58,142 @@
         }
 
         loadModel();
-        const video = document.getElementById('webcam');
-        const liveView = document.getElementById('liveView');
-        const demosSection = document.getElementById('demos');
-        const enableWebcamButton = document.getElementById('webcamButton');
-        demosSection.classList.remove('invisible');
-        enableWebcamButton.hidden = true;
 
-        let liveview_box_children = [];
+
+
+        async function startDetecting(tensor, imageWidth, imageHeight) {
+            const prediction = await model.executeAsync(tensor);
+            const boxes = prediction[0].dataSync()
+            const classes = prediction[1].dataSync()
+            const score = prediction[2].dataSync()
+            const detections = buildDetectedObjects(score, imageWidth, imageHeight, boxes, classes, classesDir)
+
+            return detections
+        }
+
+        function createTensorFromCanvas(canvas) {
+            const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+            const tensor = tf.browser.fromPixels(imageData);
+            const reshapedTensor = tf.reshape(tensor, [1, canvas.height, canvas.width, 3])
+            return reshapedTensor
+        }
+
+        function buildDetectedObjects(scores, imageWidth, imageHeight, boxes, classes, classesDir) {
+            const detectionObjects = []
+            scores.forEach((score, i) => {
+                if (score > 0.4) {
+                    const bbox = [];
+
+                    const minY = boxes[i * 4] * imageHeight;
+                    const minX = boxes[i * 4 + 1] * imageWidth;
+                    const maxY = boxes[i * 4 + 2] * imageHeight;
+                    const maxX = boxes[i * 4 + 3] * imageWidth;
+                    bbox[0] = minX;
+                    bbox[1] = minY;
+                    bbox[2] = maxX;
+                    bbox[3] = maxY;
+
+
+                    detectionObjects.push({
+                        class: classes[i],
+                        label: classesDir[classes[i]].name,
+                        score: score.toFixed(4),
+                        bbox: bbox
+                    })
+                }
+
+            })
+
+            return detectionObjects
+        }
+
+
+        let classesDir = {
+            1: {
+                name: 'head',
+                id: 1,
+            },
+            2: {
+                name: 'helmet',
+                id: 2,
+            },
+            3: {
+                name: 'person',
+                id: 3,
+            }
+        }
+
+        // Image Predict
+
+        const predictButton = document.getElementById('predictButton');
+        const imageOutputCanvas = document.getElementById('imagePredictCanvas');
+        const imageOutputCanvasCtx = imageOutputCanvas.getContext('2d');
+        const imagePreview = document.getElementById('imagePreview');
+
+        predictButton.addEventListener('click', predictImage);
+
+        async function predictImage() {
+            const imageInput = document.getElementById('imageFile').files[0];
+
+            if (!imageInput) {
+                console.error('Please select an image to upload');
+                return;
+            }
+            const img = new Image();
+            img.onload = async () => {
+                const width = img.naturalWidth;
+                const height = img.naturalHeight;
+                const tensor = preprocessImageData(img, width, height);
+
+                const predictions = await startDetecting(tensor, width, height)
+                imageOutputCanvas.width = width
+
+                imageOutputCanvas.height = height
+
+                predictions.forEach(predict => {
+                    drawBoundingBoxes(predict['bbox'], img, width, height);
+                })
+            };
+
+            img.src = URL.createObjectURL(imageInput);
+        }
+        function preprocessImageData(image, width, height) {
+            const tensor = tf.browser.fromPixels(image);
+            const reshapedTensor = tf.reshape(tensor, [1, height, width, 3])
+            return reshapedTensor;
+        }
+
+        function drawBoundingBoxes(boundingBoxes, image, width, height) {
+            imageOutputCanvasCtx.strokeStyle = 'red';
+            imageOutputCanvasCtx.lineWidth = 2;
+            imageOutputCanvasCtx.drawImage(image, 0, 0, width, height);
+
+            const [xmin, ymin, xmax, ymax] = boundingBoxes;
+            imageOutputCanvasCtx.strokeRect(xmin, ymin, xmax - xmin, ymax - ymin);
+        }
+
+
+        // function resizeImage(image, width, height) {
+        //     const canvas = document.createElement('canvas');
+        //     const ctx = canvas.getContext('2d');
+        //     canvas.width = width;
+        //     canvas.height = height;
+        //     ctx.drawImage(image, 0, 0, width, height);
+        //     return new Promise((resolve) => {
+        //         canvas.toDataURL('image/jpeg', (dataUrl) => {
+        //             const img = new Image();
+        //             img.onload = () => resolve(img);
+        //             img.src = dataUrl;
+        //         });
+        //     });
+        // }
+
+
+        // Webcam Predict
 
         //Boxes Canvas
-        const canvas = document.getElementById('outputCanvas');
-        const ctx = canvas.getContext('2d');
+        const webcamCanvas = document.getElementById('webcamPredictCanvas');
+        const webcamCanvascontext = webcamCanvas.getContext('2d');
 
         // Check if webcam access is supported.
         function getIsUserMediaSupported() {
@@ -92,12 +228,6 @@
 
 
         }
-        function createTensorFromCanvas(canvas) {
-            const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-            const tensor = tf.browser.fromPixels(imageData);
-            const reshapedTensor = tf.reshape(tensor, [1, canvas.height, canvas.width, 3])
-            return reshapedTensor
-        }
 
         function captureFrameAsTensor(videoElement) {
             const canvas = document.createElement('canvas');
@@ -113,87 +243,32 @@
 
         }
 
-        function buildDetectedObjects(scores, threshold, imageWidth, imageHeight, boxes, classes, classesDir) {
-            const detectionObjects = []
-            scores.forEach((score, i) => {
-                if (score > threshold) {
-
-
-                    const bbox = [];
-
-                    const minY = boxes[i * 4] * imageHeight;
-                    const minX = boxes[i * 4 + 1] * imageWidth;
-                    const maxY = boxes[i * 4 + 2] * imageHeight;
-                    const maxX = boxes[i * 4 + 3] * imageWidth;
-                    bbox[0] = minX;
-                    bbox[1] = minY;
-                    bbox[2] = maxX;
-                    bbox[3] = maxY;
-
-
-                    detectionObjects.push({
-                        class: classes[i],
-                        label: classesDir[classes[i]].name,
-                        score: score.toFixed(4),
-                        bbox: bbox
-                    })
-                }
-            })
-
-            return detectionObjects
-        }
-
-
-        let classesDir = {
-            1: {
-                name: 'head',
-                id: 1,
-            },
-            2: {
-                name: 'helmet',
-                id: 2,
-            },
-            3: {
-                name: 'person',
-                id: 3,
-            }
-        }
-
-        async function startDetecting(tensor) {
-            const prediction = await model.executeAsync(tensor);
-            const boxes = prediction[0].dataSync()
-            const classes = prediction[1].dataSync()
-            const score = prediction[2].dataSync()
-            const detections = buildDetectedObjects(score, 0.4, 512, 512, boxes, classes, classesDir)
-
-            return detections
-        }
-
         function predictFromWebcam() {
 
             const frameTensor = captureFrameAsTensor(video)
-            startDetecting(frameTensor).then(detections => {
+            startDetecting(frameTensor, 512, 512).then(detections => {
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                webcamCanvascontext.clearRect(0, 0, webcamCanvas.width, webcamCanvas.height);
 
                 for (const detection of detections) {
 
-                    drawBoundingBox(detection['bbox'], detection['label'], detection['score'])
+                    drawBoundingBoxToWebcam(detection['bbox'], detection['label'], detection['score'])
                 }
             })
             window.requestAnimationFrame(predictFromWebcam);
 
         }
-        function drawBoundingBox(bbox, classLabel, score) {
+
+        function drawBoundingBoxToWebcam(bbox, classLabel, score) {
             const [xMin, yMin, xMax, yMax] = bbox;
-            ctx.strokeStyle = 'red'; // Adjust color as desired
-            ctx.lineWidth = 2;
-            ctx.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
+            webcamCanvascontext.strokeStyle = 'red'; // Adjust color as desired
+            webcamCanvascontext.lineWidth = 2;
+            webcamCanvascontext.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
 
             // Optional: Draw text for class label and score
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'red';
-            ctx.fillText(`${classLabel} (${score})`, xMin + 5, yMin + 15);
+            webcamCanvascontext.font = '16px Arial';
+            webcamCanvascontext.fillStyle = 'red';
+            webcamCanvascontext.fillText(`${classLabel} (${score})`, xMin + 5, yMin + 15);
         }
 
 
