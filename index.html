@@ -87,7 +87,7 @@
             // Activate the webcam stream.
             navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
                 video.srcObject = stream;
-                video.addEventListener('loadeddata', predictWebcam);
+                video.addEventListener('loadeddata', predictFromWebcam);
             });
 
 
@@ -117,10 +117,10 @@
             const detectionObjects = []
             scores.forEach((score, i) => {
                 if (score > threshold) {
-                    
+
 
                     const bbox = [];
-                    
+
                     const minY = boxes[i * 4] * imageHeight;
                     const minX = boxes[i * 4 + 1] * imageWidth;
                     const maxY = boxes[i * 4 + 2] * imageHeight;
@@ -159,28 +159,29 @@
             }
         }
 
-        function predictWebcam() {
+        async function startDetecting(tensor) {
+            const prediction = await model.executeAsync(tensor);
+            const boxes = prediction[0].dataSync()
+            const classes = prediction[1].dataSync()
+            const score = prediction[2].dataSync()
+            const detections = buildDetectedObjects(score, 0.4, 512, 512, boxes, classes, classesDir)
+
+            return detections
+        }
+
+        function predictFromWebcam() {
 
             const frameTensor = captureFrameAsTensor(video)
-            model.executeAsync(frameTensor).then(function (prediction) {
-                const boxes = prediction[0].dataSync()
-                const classes = prediction[1].dataSync()
-                const score = prediction[2].dataSync()
-                const detections = buildDetectedObjects(score, 0.4, 512, 512, boxes, classes, classesDir)
+            startDetecting(frameTensor).then(detections => {
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 for (const detection of detections) {
-                 
+
                     drawBoundingBox(detection['bbox'], detection['label'], detection['score'])
-
                 }
-
-
-
-                window.requestAnimationFrame(predictWebcam);
             })
-
+            window.requestAnimationFrame(predictFromWebcam);
 
         }
         function drawBoundingBox(bbox, classLabel, score) {
@@ -195,7 +196,7 @@
             ctx.fillText(`${classLabel} (${score})`, xMin + 5, yMin + 15);
         }
 
-     
+
     </script>
 
 </body>
