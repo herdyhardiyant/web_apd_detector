@@ -26,7 +26,7 @@ body {
     opacity: 0.2;
   }
   
-  .camView {
+  /* .camView {
     position: relative;
     float: left;
     width: calc(100% - 20px);
@@ -43,7 +43,7 @@ body {
     z-index: 2;
     font-size: 12px;
   }
-  
+   */
   .highlighter {
     background: rgba(0, 255, 0, 0.25);
     border: 1px dashed #fff;
@@ -53,4 +53,19 @@ body {
   
   #webcamPredictCanvas {
     position: absolute;
+  }
+
+  #videoContainer {
+    position: relative;
+    height: auto;
+    overflow: hidden; /* Important for maintaining aspect ratio */
+  }
+
+  #videoPredictCanvas {
+    position: absolute;
+
+  }
+
+  #videoPlayer{
+    height: auto; /* Height will adjust based on aspect ratio */
   }

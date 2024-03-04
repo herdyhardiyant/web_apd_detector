@@ -17,13 +17,28 @@
     <section id="predictSection" class="invisible">
 
         <div>
+            <h3>Image Predict</h3>
             <input type="file" id="imageFile" accept="image/*">
-            <button id="predictButton">Predict</button>
-            <div id="imagePreview"></div>
-            <canvas id="imagePredictCanvas"></canvas>
+            <button id="predictButton">Predict Image</button>
+            <canvas hidden id="imagePredictCanvas"></canvas>
+        </div>
+
+        <div style="margin-top: 10px;">
+        </div>
+
+        <div>
+            <h3>Video Predict</h3>
+            <input type="file" id="videoFile" accept="video/*">
+            <div hidden id="videoOutputs">
+                <div id="videoContainer">
+                    <canvas id="videoPredictCanvas"></canvas>
+                    <video width="640" height="480" id="videoPlayer" controls></video>
+                </div>
+            </div>
         </div>
 
         <div id="liveView" class="camView">
+            <h3>Live webcam predict</h3>
             <button id="webcamButton">Enable Webcam</button>
             <div>
                 <canvas id="webcamPredictCanvas" width="512" height="512"></canvas>
@@ -38,7 +53,7 @@
     <script>
         let model = undefined;
 
-        const video = document.getElementById('webcam');
+        const webCamVideo = document.getElementById('webcam');
         const liveView = document.getElementById('liveView');
         const predictSection = document.getElementById('predictSection');
         const enableWebcamButton = document.getElementById('webcamButton');
@@ -81,7 +96,7 @@
         function buildDetectedObjects(scores, imageWidth, imageHeight, boxes, classes, classesDir) {
             const detectionObjects = []
             scores.forEach((score, i) => {
-                if (score > 0.4) {
+                if (score > 0.1) {
                     const bbox = [];
 
                     const minY = boxes[i * 4] * imageHeight;
@@ -123,7 +138,64 @@
             }
         }
 
-        // Image Predict
+        // Video Predict -------
+        const videoElement = document.getElementById('videoPlayer');
+        const videoFile = document.getElementById('videoFile');
+        const videoOutputDiv = document.getElementById('videoOutputs');
+        const videoPredictCanvas = document.getElementById('videoPredictCanvas');
+        const videoPredContext = videoPredictCanvas.getContext('2d');
+
+        videoFile.addEventListener('change', handleVideoUpload);
+
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                console.error('Please select a video file');
+                return;
+            }
+            videoOutputDiv.hidden = false
+            const url = URL.createObjectURL(file);
+            videoElement.src = url;
+
+            videoElement.addEventListener('play', predictVideo)
+
+            videoElement.play();
+        }
+
+        async function predictVideo() {
+            const intervalId = setInterval(async () => {
+                if (videoElement.paused || videoElement.ended) {
+                    clearInterval(intervalId);
+                    return;
+                }
+
+                const frameTensor = captureFrameAsTensor(videoElement)
+                const width = videoElement.offsetWidth
+                const height = videoElement.offsetHeight
+                videoPredictCanvas.width = videoElement.offsetWidth
+                videoPredictCanvas.height = videoElement.offsetHeight
+                const detections = await startDetecting(frameTensor, width, height)
+                videoPredContext.clearRect(0, 0, height, width);
+                // console.log(detections)
+                for (const detection of detections) {
+                    const [xMin, yMin, xMax, yMax] = detection['bbox'];
+                    videoPredContext.strokeStyle = 'red'; // Adjust color as desired
+                    videoPredContext.lineWidth = 2;
+                    videoPredContext.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
+
+
+                    const classLabel = detection['label']
+                    const score = detection['score']
+                    videoPredContext.font = '16px Arial';
+                    videoPredContext.fillStyle = 'red';
+                    videoPredContext.fillText(`${classLabel}`, xMin + 5, yMin + 15);
+                }
+
+            }, 1000);
+        }
+
+
+        // Image Predict -------
 
         const predictButton = document.getElementById('predictButton');
         const imageOutputCanvas = document.getElementById('imagePredictCanvas');
@@ -144,8 +216,9 @@
                 const width = img.naturalWidth;
                 const height = img.naturalHeight;
                 const tensor = preprocessImageData(img, width, height);
-
+                
                 const predictions = await startDetecting(tensor, width, height)
+                imageOutputCanvas.hidden = false
                 imageOutputCanvas.width = width
 
                 imageOutputCanvas.height = height
@@ -173,25 +246,10 @@
         }
 
 
-        // function resizeImage(image, width, height) {
-        //     const canvas = document.createElement('canvas');
-        //     const ctx = canvas.getContext('2d');
-        //     canvas.width = width;
-        //     canvas.height = height;
-        //     ctx.drawImage(image, 0, 0, width, height);
-        //     return new Promise((resolve) => {
-        //         canvas.toDataURL('image/jpeg', (dataUrl) => {
-        //             const img = new Image();
-        //             img.onload = () => resolve(img);
-        //             img.src = dataUrl;
-        //         });
-        //     });
-        // }
 
 
-        // Webcam Predict
+        // Webcam Predict -------
 
-        //Boxes Canvas
         const webcamCanvas = document.getElementById('webcamPredictCanvas');
         const webcamCanvascontext = webcamCanvas.getContext('2d');
 
@@ -202,7 +260,6 @@
         }
 
 
-        // If webcam supported, add event listener to button
         if (getIsUserMediaSupported()) {
             enableWebcamButton.addEventListener('click', enableCam);
         } else {
@@ -222,8 +279,8 @@
 
             // Activate the webcam stream.
             navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-                video.srcObject = stream;
-                video.addEventListener('loadeddata', predictFromWebcam);
+                webCamVideo.srcObject = stream;
+                webCamVideo.addEventListener('loadeddata', predictFromWebcam);
             });
 
 
@@ -245,7 +302,7 @@
 
         function predictFromWebcam() {
 
-            const frameTensor = captureFrameAsTensor(video)
+            const frameTensor = captureFrameAsTensor(webCamVideo)
             startDetecting(frameTensor, 512, 512).then(detections => {
 
                 webcamCanvascontext.clearRect(0, 0, webcamCanvas.width, webcamCanvas.height);
@@ -265,7 +322,7 @@
             webcamCanvascontext.lineWidth = 2;
             webcamCanvascontext.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
 
-            // Optional: Draw text for class label and score
+            // Optional: Draw text for class label 
             webcamCanvascontext.font = '16px Arial';
             webcamCanvascontext.fillStyle = 'red';
             webcamCanvascontext.fillText(`${classLabel} (${score})`, xMin + 5, yMin + 15);
