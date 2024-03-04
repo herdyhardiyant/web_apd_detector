@@ -1,4 +1,7 @@
-# Cara menjalankan aplikasi web deteksi helm dari perlengkapan APD
+# Website
+https://herdyhardiyant.github.io/web_apd_detector/
+
+# Cara menjalankan aplikasi web lokal
 ```
 $ cd web_apd_detector
 $ python -m http.server
@@ -19,7 +22,7 @@ Saya memilih dataset ini karena sudah diberikan bounding box di sekitar gambar h
 Preprocessing dilakukan secara lokal untuk menghemat unit compute google collab.
 
 1. Dataset diunduh dengan format CSV Tensorflow Object Detection.
-2. Dataset dibersihkan dari gambar yang tidak dibutuhkan dan dibuat train dan test 
+2. Dataset dibersihkan dari gambar yang tidak dibutuhkan dan dibuat split train set dan test set
 3. Konversi dataset train dan test ke tfrecord
 4. Membuat label map
 5. Compress dataset tfrecord ke .tar.xz
