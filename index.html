@@ -77,10 +77,11 @@
 
         async function startDetecting(tensor, imageWidth, imageHeight) {
             const prediction = await model.executeAsync(tensor);
-            const boxes = prediction[0].dataSync()
-            const classes = prediction[1].dataSync()
-            const score = prediction[2].dataSync()
-            const detections = buildDetectedObjects(score, imageWidth, imageHeight, boxes, classes, classesDir)
+
+            const boxes = prediction[4].dataSync()
+            const classes = prediction[3].dataSync()
+            const score = prediction[0].dataSync()
+            const detections = buildDetectedObjects(score, imageWidth, imageHeight, boxes, classes)
 
             return detections
         }
@@ -92,90 +93,53 @@
             return reshapedTensor
         }
 
-        function buildDetectedObjects(scores, imageWidth, imageHeight, boxes, classes, classesDir) {
+
+
+        function buildDetectedObjects(scores, imageWidth, imageHeight, boxes, classes) {
+            let classesDir = {
+                1: {
+                    name: 'no helmet',
+                    id: 1,
+                },
+                2: {
+                    name: 'helmet',
+                    id: 2,
+                },
+                3: {
+                    name: 'other',
+                    id:3 
+                }
+            }
+            console.log(classes)
             const detectionObjects = []
             scores.forEach((score, i) => {
 
-                const bbox = [];
+                    const bbox = [];
 
-                const minY = boxes[i * 4] * imageHeight;
-                const minX = boxes[i * 4 + 1] * imageWidth;
-                const maxY = boxes[i * 4 + 2] * imageHeight;
-                const maxX = boxes[i * 4 + 3] * imageWidth;
-                bbox[0] = minX;
-                bbox[1] = minY;
-                bbox[2] = maxX;
-                bbox[3] = maxY;
+                    const minY = boxes[i * 4] * imageHeight;
+                    const minX = boxes[i * 4 + 1] * imageWidth;
+                    const maxY = boxes[i * 4 + 2] * imageHeight;
+                    const maxX = boxes[i * 4 + 3] * imageWidth;
+                    bbox[0] = minX;
+                    bbox[1] = minY;
+                    bbox[2] = maxX;
+                    bbox[3] = maxY;
+                    detectionObjects.push({
+                        class: classes[i],
+                        label: classesDir[classes[i]].name,
+                        score: score.toFixed(4),
+                        bbox: bbox
+                    })
 
+                }
 
-                detectionObjects.push({
-                    class: classes[i],
-                    label: classesDir[classes[i]].name,
-                    score: score.toFixed(4),
-                    bbox: bbox
-                })
-
-
-            })
+            )
 
             return detectionObjects
         }
 
 
-        let classesDir = {
-            1: {
-                name: 'Glove',
-                id: 1,
-            },
-            2: {
-                name: 'Goggle',
-                id: 2,
-            },
-            3: {
-                name: 'Hardhat',
-                id: 3,
-            },
-            4: {
-                name: 'Ladder',
-                id: 4,
-            },
-            5: {
-                name: 'Mask',
-                id: 5,
-            },
-            6: {
-                name: 'NO-Gloves',
-                id: 6,
-            },
-            7: {
-                name: 'NO-Goggles',
-                id: 7,
-            },
-            8: {
-                name: 'NO-Hardhat',
-                id: 8,
-            },
-            9: {
-                name: 'NO-Mask',
-                id: 8,
-            },
-            10: {
-                name: 'NO-Safety Vest',
-                id: 10,
-            },
-            11: {
-                name: 'Person',
-                id: 11,
-            },
-            12: {
-                name: 'Safety Cone',
-                id: 12,
-            },
-            13: {
-                name: 'Safety Vest',
-                id: 13,
-            }
-        }
+
 
         // Video Predict -------
         const videoElement = document.getElementById('videoPlayer');
@@ -215,12 +179,11 @@
                 videoPredictCanvas.height = videoElement.offsetHeight
                 const detections = await startDetecting(frameTensor, width, height)
                 videoPredContext.clearRect(0, 0, height, width);
-                console.log(detections)
                 for (const detection of detections) {
-                    if (detection['score'] < 0.2) { 
+                    if (detection['score'] < 0.1) {
                         continue
                     }
-                    
+
 
                     const [xMin, yMin, xMax, yMax] = detection['bbox'];
                     videoPredContext.strokeStyle = 'red'; // Adjust color as desired
@@ -229,7 +192,7 @@
                     const classLabel = detection['label']
                     videoPredContext.font = '16px Arial';
                     videoPredContext.fillStyle = 'red';
-                    videoPredContext.fillText(`${classLabel} (${detection['score']})`, xMin + 5, yMin + 15);
+                    videoPredContext.fillText(`${classLabel}`, xMin + 5, yMin + 15);
                 }
 
             }, 1000);
@@ -266,7 +229,7 @@
 
                 predictions.forEach(predict => {
                     if (predict['score'] > 0.4) {
-                    drawBoundingBoxes(predict['bbox'], predict['label'], img, width, height);
+                        drawBoundingBoxes(predict['bbox'], predict['label'], img, width, height);
                     }
                 })
             };
