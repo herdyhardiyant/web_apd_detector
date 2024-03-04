@@ -1,7 +1,7 @@
-# Website
+# Buka aplikasi web ini secara online
 https://herdyhardiyant.github.io/web_apd_detector/
 
-# Cara menjalankan aplikasi web lokal
+# Cara menjalankan aplikasi web di lokal
 ```
 $ cd web_apd_detector
 $ python -m http.server
@@ -9,6 +9,18 @@ Buka 'localhost:8000' di browser
 ```
 
 **Tolong jangan menggunakan http://0.0.0.0:8000/ agar model tensorflowjs tidak terblokir.**
+
+
+# Cara menggunakan aplikasi web ini
+Pertama, tunggu model AI loading sampai menu keluar. 
+
+Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi, kemudian klik tombol predict
+![alt text](image-2.png)
+Deteksi input video, dengan cara klik  browse
+![alt text](image-3.png)
+Live webcam dengan cara klik enable webcam, kemudian berikan izin untuk mengakses camera. 
+![alt text](image-4.png)
+
 
 # Proses pencarian dataset
 Saya memilih dataset object detection helm dari url berikut
