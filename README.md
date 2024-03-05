@@ -14,16 +14,16 @@ Buka 'localhost:8000' di browser
 # Cara menggunakan aplikasi web ini
 Pertama, tunggu loading model AI sampai menu untuk prediksi muncul. 
 
-Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi, kemudian klik tombol predict
+Deteksi input gambar dapat dilakukan dengan cara klik browse di menu Image Predict untuk memilih gambar yang ingin dideteksi, kemudian klik tombol predict
 
 
 ![alt text](public/image-2.png)
 
-Deteksi input video, dengan cara klik  browse
+Deteksi input video, dengan cara klik browse untuk upload video yang ingin dideteksi di menu Video Predict
 
 ![alt text](public/image-3.png)
 
-Live webcam dengan cara klik enable webcam, kemudian berikan izin untuk mengakses camera. 
+Live webcam dengan cara klik enable webcam di menu live webcam predict, kemudian berikan izin untuk mengakses camera. 
 
 ![alt text](public/image-4.png)
 
