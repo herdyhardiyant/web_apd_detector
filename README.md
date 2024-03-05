@@ -12,7 +12,7 @@ Buka 'localhost:8000' di browser
 
 
 # Cara menggunakan aplikasi web ini
-Pertama, tunggu model AI loading sampai menu keluar. 
+Pertama, tunggu loading model AI sampai menu untuk prediksi muncul. 
 
 Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi, kemudian klik tombol predict
 
