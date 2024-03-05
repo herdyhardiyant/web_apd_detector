@@ -14,18 +14,18 @@ Buka 'localhost:8000' di browser
 # Cara menggunakan aplikasi web ini
 Pertama, tunggu model AI loading sampai menu keluar. 
 
-Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi, kemudian klik tombol predict
+Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi
 
 
-![alt text](public/image-2.png)
+![alt text](public/image.png)
 
 Deteksi input video, dengan cara klik  browse
 
-![alt text](public/image-3.png)
+![alt text](public/image-1.png)
 
 Live webcam dengan cara klik enable webcam, kemudian berikan izin untuk mengakses camera. 
 
-![alt text](public/image-4.png)
+![alt text](public/image-2.png)
 
 # Proses pencarian dataset
 Saya memilih dataset object detection helm dari url berikut

@@ -21,13 +21,12 @@
             <div>
                 <canvas hidden id="imagePredictCanvas"></canvas>
             </div>
-            <input type="file" id="imageFile" accept="image/*">
-            <button id="predictButton">Predict Image</button>
+            <input class="btn btn-light" type="file" id="imageFile" accept="image/*">
         </div>
 
         <div style="margin-top: 60px;">
             <h3>Video Predict</h3>
-            <input type="file" id="videoFile" accept="video/*">
+            <input class="btn btn-light" type="file" id="videoFile" accept="video/*">
             <div hidden id="videoOutputs">
                 <div id="videoContainer">
                     <canvas id="videoPredictCanvas"></canvas>
@@ -38,9 +37,9 @@
 
         <div style="margin-top: 60px;" id="liveView" class="camView">
             <h3>Live webcam predict</h3>
-            <button id="webcamButton">Enable Webcam</button>
+            <button class="btn btn-light" id="webcamButton">Enable Webcam</button>
             <div>
-                <canvas id="webcamPredictCanvas" width="512" height="512"></canvas>
+                <canvas  id="webcamPredictCanvas" width="512" height="512"></canvas>
                 <video id="webcam" autoplay muted width="512" height="512"></video>
             </div>
 
@@ -196,12 +195,12 @@
 
         // Image Predict -------
 
-        const predictButton = document.getElementById('predictButton');
         const imageOutputCanvas = document.getElementById('imagePredictCanvas');
         const imageOutputCanvasCtx = imageOutputCanvas.getContext('2d');
         const imagePreview = document.getElementById('imagePreview');
+        const inputImage = document.getElementById('imageFile')
 
-        predictButton.addEventListener('click', predictImage);
+        inputImage.addEventListener('change', predictImage)
 
         async function predictImage() {
             const imageInput = document.getElementById('imageFile').files[0];
