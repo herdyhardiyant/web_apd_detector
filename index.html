@@ -65,6 +65,7 @@
                 model = await tf.loadGraphModel('model_tfjs/model.json');
                 predictSection.classList.remove('invisible');
                 enableWebcamButton.hidden = false;
+                console.log(model + " is loaded")
             } catch (error) {
                 console.error('Failed to load model:', error);
             }
