@@ -1,4 +1,4 @@
-# Aplikasi Web Secara Online dengan Github Pages
+# Aplikasi Web Online dengan Github Pages
 https://herdyhardiyant.github.io/web_apd_detector/
 
 
