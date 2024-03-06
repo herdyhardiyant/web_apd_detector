@@ -1,4 +1,8 @@
-# Cara menjalankan aplikasi web di lokal
+# Aplikasi Web Secara Online dengan Github Pages
+https://herdyhardiyant.github.io/web_apd_detector/
+
+
+# Cara Menjalankan Aplikasi Web di Lokal Komputer
 ```
 $ cd web_apd_detector
 $ python -m http.server
@@ -8,7 +12,7 @@ Buka 'localhost:8000' di browser
 **Tolong jangan menggunakan http://0.0.0.0:8000/ agar model tensorflowjs tidak terblokir.**
 
 
-# Cara menggunakan aplikasi web ini
+# Cara Menggunakan Aplikasi Web
 Pertama, tunggu loading model AI sampai menu untuk prediksi muncul. 
 
 Deteksi input gambar dapat dilakukan dengan cara klik browse untuk memilih gambar yang ingin dideteksi
@@ -24,7 +28,7 @@ Live webcam dengan cara klik enable webcam di menu live webcam predict, kemudian
 
 ![alt text](public/image-2.png)
 
-# Proses pencarian dataset
+# Proses Pencarian Dataset
 Saya memilih dataset object detection helm dari url berikut
 https://universe.roboflow.com/hardhats/hardhats-ctl1u/dataset/2/images
 https://universe.roboflow.com/universe-datasets/hard-hat-universe-0dy7t
