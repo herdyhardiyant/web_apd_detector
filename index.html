@@ -39,7 +39,7 @@
             <h3>Live webcam predict</h3>
             <button class="btn btn-light" id="webcamButton">Enable Webcam</button>
             <div>
-                <canvas  id="webcamPredictCanvas" width="512" height="512"></canvas>
+                <canvas id="webcamPredictCanvas" width="512" height="512"></canvas>
                 <video id="webcam" autoplay muted width="512" height="512"></video>
             </div>
 
@@ -80,7 +80,6 @@
             const classes = prediction[4].dataSync()
             const score = prediction[7].dataSync()
             const detections = buildDetectedObjects(score, imageWidth, imageHeight, boxes, classes)
-
             return detections
         }
 
@@ -177,15 +176,14 @@
                     if (detection['score'] < 0.1) {
                         continue
                     }
-
-
+                    const color = detection['label'] === 1 ? "red" : "blue"
                     const [xMin, yMin, xMax, yMax] = detection['bbox'];
-                    videoPredContext.strokeStyle = 'red'; // Adjust color as desired
+                    videoPredContext.strokeStyle = color; // Adjust color as desired
                     videoPredContext.lineWidth = 2;
                     videoPredContext.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
                     const classLabel = detection['label']
                     videoPredContext.font = '16px Arial';
-                    videoPredContext.fillStyle = 'red';
+                    videoPredContext.fillStyle = color;
                     videoPredContext.fillText(`${classLabel}`, xMin + 5, yMin + 15);
                 }
 
@@ -216,14 +214,25 @@
                 const tensor = preprocessImageData(img, width, height);
 
                 const predictions = await startDetecting(tensor, width, height)
+                console.log(predictions)
                 imageOutputCanvas.hidden = false
                 imageOutputCanvas.width = width
 
                 imageOutputCanvas.height = height
+                imageOutputCanvasCtx.drawImage(img, 0, 0, width, height);
 
                 predictions.forEach(predict => {
-                    if (predict['score'] > 0.4) {
-                        drawBoundingBoxes(predict['bbox'], predict['label'], img, width, height);
+                    if (predict['score'] > 0.2) {
+                        // drawBoundingBoxes(predict['bbox'], predict['label'], img, width, height);
+                        const color = predict['label'] === 1 ? "red" : "blue"
+
+                        imageOutputCanvasCtx.strokeStyle = color;
+                        imageOutputCanvasCtx.lineWidth = 2;
+                        const [xmin, ymin, xmax, ymax] = predict['bbox'];
+                        imageOutputCanvasCtx.strokeRect(xmin, ymin, xmax - xmin, ymax - ymin);
+                        imageOutputCanvasCtx.font = '16px Arial';
+                        imageOutputCanvasCtx.fillStyle = color;
+                        imageOutputCanvasCtx.fillText(`${predict['label']}}`, xmin + 5, ymin + 15);
                     }
                 })
             };
@@ -235,22 +244,6 @@
             const reshapedTensor = tf.reshape(tensor, [1, height, width, 3])
             return reshapedTensor;
         }
-
-        function drawBoundingBoxes(boundingBoxes, label, image, width, height) {
-            imageOutputCanvasCtx.strokeStyle = 'red';
-            imageOutputCanvasCtx.lineWidth = 2;
-            imageOutputCanvasCtx.drawImage(image, 0, 0, width, height);
-
-            const [xmin, ymin, xmax, ymax] = boundingBoxes;
-            imageOutputCanvasCtx.strokeRect(xmin, ymin, xmax - xmin, ymax - ymin);
-            console.log(label)
-            imageOutputCanvasCtx.font = '16px Arial';
-            imageOutputCanvasCtx.fillStyle = 'red';
-            imageOutputCanvasCtx.fillText(`${label}`, xmin + 5, ymin + 15);
-        }
-
-
-
 
         // Webcam Predict -------
 
@@ -324,14 +317,16 @@
         }
 
         function drawBoundingBoxToWebcam(bbox, classLabel, score) {
+            console.log(classLabel)
+            const color = classLabel === "no helmet" ? "red" : "blue"
             const [xMin, yMin, xMax, yMax] = bbox;
-            webcamCanvascontext.strokeStyle = 'red'; // Adjust color as desired
+            webcamCanvascontext.strokeStyle = color; 
             webcamCanvascontext.lineWidth = 2;
             webcamCanvascontext.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
 
             // Optional: Draw text for class label 
             webcamCanvascontext.font = '16px Arial';
-            webcamCanvascontext.fillStyle = 'red';
+            webcamCanvascontext.fillStyle = color;
             webcamCanvascontext.fillText(`${classLabel} (${score})`, xMin + 5, yMin + 15);
         }
 
