@@ -1,6 +1,3 @@
-# Buka aplikasi web ini secara online
-https://herdyhardiyant.github.io/web_apd_detector/
-
 # Cara menjalankan aplikasi web di lokal
 ```
 $ cd web_apd_detector
