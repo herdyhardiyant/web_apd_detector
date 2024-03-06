@@ -176,7 +176,8 @@
                     if (detection['score'] < 0.1) {
                         continue
                     }
-                    const color = detection['label'] === 1 ? "red" : "blue"
+                    const label = detection['label']
+                    const color = label === "no helmet" ? "red" : "blue"
                     const [xMin, yMin, xMax, yMax] = detection['bbox'];
                     videoPredContext.strokeStyle = color; // Adjust color as desired
                     videoPredContext.lineWidth = 2;
@@ -232,7 +233,7 @@
                         imageOutputCanvasCtx.strokeRect(xmin, ymin, xmax - xmin, ymax - ymin);
                         imageOutputCanvasCtx.font = '16px Arial';
                         imageOutputCanvasCtx.fillStyle = color;
-                        imageOutputCanvasCtx.fillText(`${predict['label']}}`, xmin + 5, ymin + 15);
+                        imageOutputCanvasCtx.fillText(`${predict['label']}`, xmin + 5, ymin + 15);
                     }
                 })
             };
